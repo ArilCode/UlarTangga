@@ -560,9 +560,10 @@ function doRoll() {
       clearInterval(rollInterval);
       rollInterval = null;
       diceEl.classList.remove('rolling');
-      let d = getDice();
-      showDice(d);
-      moveStep(players[turn], d);
+           let d = getDice();
+           showDice(d);
+           diceEl.dataset.last = d;
+           moveStep(players[turn], d);
     }
   }, 70);
 }
@@ -647,12 +648,50 @@ function checkKick(p){
 function finishAfterMove(p){
  if(p.pos===100){
    p.win=true; p.rank=winners.length+1; winners.push(p); sfx('win');
-   if(winners.length < players.length-1){ logEl.innerHTML=`🏁 ${p.name} FINISH #${p.rank}! Sisa ${players.length-winners.length} pemain`; render(); place(); setTimeout(()=>{ moving=false; nextTurn(); },800); return; }
-   else { let loser=players.find(x=>!x.win); if(loser){ loser.rank=players.length; winners.push(loser); } showFinalRanking(); return; }
+   if(winners.length < players.length-1){
+     logEl.innerHTML=`🏁 ${p.name} FINISH #${p.rank}! Sisa ${players.length-winners.length} pemain`;
+     render(); place();
+     isDiceLocked = false; // FIX: buka kunci
+     setTimeout(()=>{ moving=false; nextTurn(); },800);
+     return;
+   } else {
+     let loser=players.find(x=>!x.win);
+     if(loser){ loser.rank=players.length; winners.push(loser); }
+     showFinalRanking();
+     return;
+   }
  }
- let isSix=document.querySelectorAll('.pip.on').length===6;
- if(isSix && diceRuleSixRepeat){ moving=false; logEl.innerHTML=`🎉 Dapat 6! ${p.name} lempar lagi!`; diceEl.classList.remove('disabled','bot-turn'); diceEl.style.pointerEvents='auto'; updateLock(); if(isAutoPlayer(p)) setTimeout(botRoll,900); }
- else { if(isSix &&!diceRuleSixRepeat){ logEl.innerHTML=`Dapat 6 tapi mode tanpa putar lagi`; } sixStreak=0; nextTurn(); }
+
+ let diceValue = document.querySelectorAll('.pip.on').length;
+ // Mapping pip ke angka biar ga salah baca pas animasi
+ let isSix = (diceValue === 6) || (p.pos!== 100 && sixStreak > 0 && diceValue === 6); // simpel: cek 6
+ // Lebih akurat: ambil dari result terakhir
+ let lastDice = 0;
+ try { lastDice = parseInt(document.getElementById('dice').dataset.last || "0"); } catch {}
+
+ // Pakai cara paling aman: cek sixStreak atau cek langsung
+ const gotSix = sixStreak > 0; // karena sixStreak udah di-set di getDice()
+
+ if(gotSix && diceRuleSixRepeat){
+   moving=false;
+   isDiceLocked = false; // PENTING: buka kunci dulu
+   logEl.innerHTML=`🎉 Dapat 6! ${p.name} lempar lagi!`;
+
+   if(isAutoPlayer(p)){
+     diceEl.classList.add('disabled','bot-turn');
+     diceEl.style.pointerEvents='none';
+     setTimeout(botRoll, 900);
+   } else {
+     diceEl.classList.remove('disabled','bot-turn');
+     diceEl.style.pointerEvents='auto';
+     updateLock();
+   }
+ } else {
+   if(gotSix &&!diceRuleSixRepeat){ logEl.innerHTML=`Dapat 6 tapi mode tanpa putar lagi`; }
+   sixStreak=0;
+   isDiceLocked = false;
+   nextTurn();
+ }
 }
 
 // ==========================================================
@@ -707,8 +746,8 @@ if(vs){
   });
 }
 
-// === PWA - Offline Support v11.0.0 ===
-/*if ('serviceWorker' in navigator) {
+// === PWA - Offline Support v11.0.6 ===
+if ('serviceWorker' in navigator) {
   // Register Service Worker after page fully loaded
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js');
@@ -722,4 +761,4 @@ if(vs){
     refreshing = true;
     window.location.reload();
   });
-}*/
+}
