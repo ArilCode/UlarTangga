@@ -16,6 +16,7 @@ let boardEl=document.getElementById('board'), players=[], turn=0, playing=false,
 let winners=[], rareSpawns=[], isMuted=false, isLight=false;
 let diceRuleStart='any', diceRuleSixRepeat=true, allowShared=true;
 let diceRuleBounce=true; // true=MANTUL (bounce back), false=DIAM (stay)
+let isDiceLocked = false;
 let lastClickTime = 0;
 let rollInterval = null;
 
@@ -522,29 +523,48 @@ function place(){
 // ==========================================================
 function getDiceForPlayer(p){ return Math.floor(Math.random()*6)+1; }
 function getDice(){ let d=getDiceForPlayer(players[turn]); if(d===6) sixStreak++; else sixStreak=0; if(sixStreak>=3){ d=Math.floor(Math.random()*5)+1; sixStreak=0; } return d; }
-function humanRoll(){
- if(!playing) return;
- if(moving){
-   if(!isAutoPlayer(players[turn])){
-     doRoll();
-   }
-   return;
- }
- if(isAutoPlayer(players[turn])){ if(players[turn].auto) return; sfx('no'); return; }
- if(diceEl.classList.contains('disabled')) return;
- if(diceEl.classList.contains('bot-turn')){ sfx('no'); return; }
- if(diceEl.style.pointerEvents==='none') return;
- doRoll();
+function humanRoll() {
+  if (!playing || isDiceLocked || moving || rollInterval) return;
+  if (isAutoPlayer(players[turn])) {
+    if (players[turn].auto) return;
+    sfx('no');
+    return;
+  }
+  if (diceEl.classList.contains('disabled') || diceEl.classList.contains('bot-turn')) {
+    sfx('no');
+    return;
+  }
+  doRoll();
 }
-function botRoll(){ if(!playing || moving) return; if(!isAutoPlayer(players[turn])) return; diceEl.classList.add('disabled','bot-turn'); diceEl.style.pointerEvents='none'; doRoll(); }
-function doRoll(){
- if(rollInterval){ clearInterval(rollInterval); rollInterval=null; }
- moving=true; diceEl.classList.add('rolling'); diceEl.classList.remove('disabled'); diceEl.style.pointerEvents='auto'; sfx('dice');
- let r=0;
- rollInterval=setInterval(()=>{
-   showDice(Math.floor(Math.random()*6)+1);
-   if(++r>12){ clearInterval(rollInterval); rollInterval=null; diceEl.classList.remove('rolling'); let d=getDice(); showDice(d); moveStep(players[turn],d); }
- },70);
+
+function botRoll() {
+  if (!playing || moving || rollInterval || isDiceLocked) return;
+  if (!isAutoPlayer(players[turn])) return;
+  doRoll();
+}
+
+function doRoll() {
+  if (rollInterval) { return; }
+  if (isDiceLocked) return;
+  
+  isDiceLocked = true;
+  moving = true;
+  diceEl.classList.add('rolling', 'disabled');
+  diceEl.style.pointerEvents = 'none';
+  sfx('dice');
+  
+  let r = 0;
+  rollInterval = setInterval(() => {
+    showDice(Math.floor(Math.random() * 6) + 1);
+    if (++r > 12) {
+      clearInterval(rollInterval);
+      rollInterval = null;
+      diceEl.classList.remove('rolling');
+      let d = getDice();
+      showDice(d);
+      moveStep(players[turn], d);
+    }
+  }, 70);
 }
 
 // ==========================================================
@@ -569,13 +589,15 @@ function moveStep(p,steps){
      sfx('bust');
      setTimeout(() => {
        moving = false;
-       if (isSixRoll && diceRuleSixRepeat) {
-         logEl.innerHTML = `Butuh ${need}! Tapi dapat 6, ${p.name} lempar lagi!`;
-         diceEl.classList.remove('disabled', 'bot-turn');
-         diceEl.style.pointerEvents = 'auto';
-         updateLock();
-         if (isAutoPlayer(players[turn])) setTimeout(botRoll, 900);
-       } else {
+        if (isSix && diceRuleSixRepeat) {
+          moving = false;
+          isDiceLocked = false;
+          logEl.innerHTML = `🎉 Dapat 6! ${p.name} lempar lagi!`;
+          diceEl.classList.remove('disabled', 'bot-turn');
+          diceEl.style.pointerEvents = 'auto';
+          updateLock();
+          if (isAutoPlayer(p)) setTimeout(botRoll, 900);
+        } else {
          nextTurn();
        }
      }, 700);
@@ -652,7 +674,13 @@ function checkGameOver(){ if(winners.length>=players.length-1){ showFinalRanking
 // TURN ROTATION ENGINE
 // Moves to next player, skips finished players
 // ==========================================================
-function nextTurn(){ let loop=0; do{ turn=(turn+1)%players.length; loop++; if(loop>20) break; }while(players[turn].win); render(); place(); moving=false; diceEl.classList.remove('disabled','rolling'); diceEl.style.pointerEvents='auto'; updateLock(); if(isAutoPlayer(players[turn]) &&!players[turn].win) setTimeout(botRoll,1100); }
+function nextTurn(){
+  isDiceLocked = false;
+  let loop=0;
+  do{ turn=(turn+1)%players.length; loop++; if(loop>20) break; }while(players[turn].win);
+  render(); place(); moving=false; diceEl.classList.remove('disabled','rolling'); diceEl.style.pointerEvents='auto'; updateLock();
+  if(isAutoPlayer(players[turn]) &&!players[turn].win) setTimeout(botRoll,1100);
+}
 
 // ==========================================================
 // GAME BOOTSTRAP / INIT
@@ -680,7 +708,7 @@ if(vs){
 }
 
 // === PWA - Offline Support v11.0.0 ===
-if ('serviceWorker' in navigator) {
+/*if ('serviceWorker' in navigator) {
   // Register Service Worker after page fully loaded
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js');
@@ -694,4 +722,4 @@ if ('serviceWorker' in navigator) {
     refreshing = true;
     window.location.reload();
   });
-}
+}*/
