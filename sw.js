@@ -1,5 +1,5 @@
-// Service Worker - Ular Tangga v11.0.4 - Offline with Fonts
-const CACHE = "ular-v11.0.6";
+// Service Worker - Ular Tangga v11.0.7 - Offline with Fonts
+const CACHE = "ular-v11.0.7";
 const ASSETS = [
   "./",
   "./index.html",

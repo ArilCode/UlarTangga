@@ -746,7 +746,7 @@ if(vs){
   });
 }
 
-// === PWA - Offline Support v11.0.6 ===
+// === PWA - Offline Support v11.0.7 ===
 if ('serviceWorker' in navigator) {
   // Register Service Worker after page fully loaded
   window.addEventListener('load', () => {
