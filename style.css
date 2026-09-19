@@ -1,0 +1,466 @@
+/* ==========================================================
+   GLOBAL COLOR SCHEME & ROOT BACKGROUND
+   Forces dark mode only to prevent browser auto light
+   ========================================================== */
+html{color-scheme: dark only!important; background:#0f1130!important;}
+
+html, body {
+  overscroll-behavior: none !important;
+  overscroll-behavior-y: none !important;
+  -webkit-overscroll-behavior: none !important;
+  touch-action: pan-x pan-y;
+}
+
+/* ==========================================================
+   BODY BASE THEME - DARK DEFAULT
+   ========================================================== */
+body{background:#0f1130!important; color:white!important;}
+
+/* ==========================================================
+   GLOBAL RESET & FONT SETUP
+   Uses Fredoka font, disables selection and tap highlight
+   ========================================================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Fredoka',sans-serif;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: #0f1130;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 6px;
+  flex-direction: column;
+  transition: all 0.3s;
+}
+
+/* Light theme override for body */
+body.light {
+  background: #c8d0f0;
+}
+
+/* ==========================================================
+   MAIN GAME WRAPPER
+   Central container for board and controls
+   ========================================================== */
+#wrap {
+  width: 100%;
+  max-width: 470px;
+  background: #1c2050;
+  border-radius: 22px;
+  padding: 10px;
+  transition: all 0.3s;
+}
+
+body.light #wrap {
+  background:#e8eaf8;
+}
+
+/* ==========================================================
+   MAIN TITLE - ULAR TANGGA
+   Color switches: #ffde59 dark / #1a2150 light
+   ========================================================== */
+h1 {
+  text-align: center;
+  color: #ffde59;
+  font-size: 18px;
+}
+
+body.light h1 {
+  color: #1c2050;
+}
+
+h1 span {
+  color: #ffde59
+}
+
+/* ==========================================================
+   LEGACY TOP BAR (Hidden)
+   Kept for compatibility with old start system
+   ========================================================== */
+.top {
+  display: flex;
+  gap: 6px;
+  margin: 8px 0;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.top select {
+  flex: 1;
+  padding: 10px 8px;
+  border-radius: 12px;
+  border: none;
+  background: #2c317a;
+  color: white;
+  font-weight: 700;
+  font-size: 11px;
+}
+
+/* ==========================================================
+   DIFFICULTY & PLAYER SETUP SECTION
+   ========================================================== */
+#diffWrap {
+  flex: 1 1 62%;
+  min-width: 150px;
+} #diffWrap select{width:100%;background:#3a2a6a;border:1px solid #ffde59;padding:10px 8px;border-radius:12px;color:white;font-weight:700;font-size:11px}
+#nameSetup{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}
+
+/* ==========================================================
+   PLAYER NAME INPUT BOX
+   Contains name, emoji select, and color picker
+   ========================================================== */
+.nameBox{
+  background:#24286a;
+  border-radius:12px;
+  padding:6px;
+  display:flex;
+  gap:6px;
+  align-items:center;
+  border:1px solid #2c317a;
+  min-width:0;
+}
+.nameBox input[type="text"],.nameBox input:not([type="color"]){
+  flex:1;
+  min-width:0;
+  background:#0a0d2a;
+  border:none;
+  border-radius:8px;
+  padding:8px 6px;
+  color:white;
+  font-size:11px;
+  font-weight:700;
+  outline:none;
+}
+.nameBox select{
+  width:52px;
+  flex-shrink:0;
+  background:#2c317a;
+  border:none;
+  border-radius:8px;
+  padding:6px 2px;
+  color:white;
+  font-size:12px;
+  font-weight:800;
+  text-align:center
+}
+
+/* ==========================================================
+   BOARD WRAPPER & BOARD GRID
+   10x10 zigzag board container
+   ========================================================== */
+#boardWrap{position:relative;background:#0a0d2a;border-radius:16px;padding:6px;overflow:hidden}
+body.light #boardWrap{background:#a8b0d8}
+#board{display:grid;grid-template-columns:repeat(10, minmax(0,1fr));gap:4px;width:100%}
+
+/* ==========================================================
+   BOARD CELL STYLING
+   Handles normal, ladder, snake, and rare cells
+   ========================================================== */
+.cell{position:relative;background:#2a2f7a;border-radius:8px;aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2px;transition:transform 0.2s;box-sizing:border-box;border:2px solid transparent}
+body.light.cell{background:#d0d6f0}.cell b{font-size:11px;color:#fff} body.light.cell b{color:#1c2050}
+.cell small{min-width:22px;text-align:center;font-size:6px;font-weight:800;padding:1px 4px;border-radius:8px;margin-top:2px}
+.cell.ladder{background:linear-gradient(145deg,#2e5a28,#244a1e);border-color:#69f0ae44}.cell.ladder small{background:#69f0ae;color:#0a2a12}
+.cell.snake{background:linear-gradient(145deg,#5a2a3a,#4a1a2a);border-color:#ff408144}.cell.snake small{background:#ff4081;color:#fff}
+.cell.rare-ladder small{background:#69f0ae!important;color:#0a2a12!important}
+.cell.rare-snake small{background:#ff4081!important;color:#fff!important}
+.cell.rare-ladder{background:linear-gradient(145deg,#2e5a28,#244a1e)!important;border-color:#ffde59!important;box-shadow:0 0 12px #ffde59;animation:rareGlow 1s infinite alternate}
+.cell.rare-snake{background:linear-gradient(145deg,#5a2a3a,#4a1a2a)!important;border-color:#ff1744!important;box-shadow:0 0 12px #ff1744;animation:rareGlowRed 1s infinite alternate}
+@keyframes rareGlow{from{box-shadow:0 0 8px #ffde59}to{box-shadow:0 0 20px #ffde59,0 0 30px #ffb700}}
+@keyframes rareGlowRed{from{box-shadow:0 0 8px #ff1744}to{box-shadow:0 0 20px #ff1744,0 0 30px #ff0000}}
+.cell.active{outline:2.5px solid #ffde59;box-shadow:0 0 12px #ffde59;z-index:2}
+.cell.anim-up{animation:upAnim 1s ease 2}.cell.anim-down{animation:downAnim 1s ease 2}
+@keyframes upAnim{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
+@keyframes downAnim{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
+
+/* ==========================================================
+   PLAYER PAWN (PION)
+   Visual pawn on board with active and kicked animations
+   ========================================================== */
+.pion{position:absolute;width:22px;height:22px;border-radius:50%;border:2.2px solid white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:white;z-index:10;transition:all 0.35s cubic-bezier(0.34,1.56,0.64,1);left:50%;top:50%;pointer-events:none}
+.pion.active{transform:translate(-50%,-50%) scale(1.35) translateY(-6px);box-shadow:0 0 14px currentColor;border-color:#ffde59;z-index:12}
+.pion.kicked{animation:kick 0.6s ease forwards}
+@keyframes kick{0%{transform:translate(-50%,-50%) scale(1.3)}30%{transform:translate(-50%,-130%) scale(1.5) rotate(20deg)}100%{transform:translate(-50%,-50%) scale(0)}}
+
+/* ==========================================================
+   PLAYER STATUS CARDS
+   Shows player info, position, and AUTO toggle
+   ========================================================== */
+#players{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:10px 0;}
+.p-card{position:relative;background:rgba(0,0,0,0.25);padding:6px 2px 18px 2px;border-radius:10px;text-align:center;border:2px solid transparent}
+body.light.p-card{background:rgba(255,255,255,0.7)}.p-card.turn{border-color:#ffde59;background:rgba(255,222,89,0.15)}.p-card b{font-size:9px;color:white} body.light .p-card b {color:#1c2050}.p-card span{font-size:8px;color:#aaa}
+.p-card.finished{opacity:0.5;background:rgba(105,240,174,0.15);border-color:#69f0ae}
+.p-afk{position:absolute;bottom:1px;left:50%;transform:translateX(-50%);font-size:7px;padding:2px 5px;border-radius:8px;border:none;font-weight:800;cursor:pointer}
+.p-afk.on{background:#69f0ae;color:#0a2a12}.p-afk.off{background:#2c317a;color:#aaa;border:1px solid #3a3a6a}
+body.light.p-afk.off{background:#d0d6f0;color:#1c2050}
+
+/* ==========================================================
+   DICE AREA & GAME LOG
+   Contains log text, menu button, and dice
+   ========================================================== */
+#diceArea{display:none;align-items:center;gap:10px;background:#24286a;border-radius:14px;padding:10px} body.light #diceArea{background:#d0d6f0} #diceArea.show{display:flex}
+#log{flex:1;color:#c2c6f0;font-size:10.5px;line-height:1.3} body.light #log{color:#1c2050}
+#dice{width:58px;height:58px;flex-shrink:0;background:white;border-radius:12px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:6px;gap:2px;box-shadow:0 4px 0 #999;cursor:pointer;position:relative}
+#dice.disabled{opacity:0.35;pointer-events:none!important;filter:grayscale(1);transform:translateY(3px)}
+#dice.bot-turn{opacity:0.35;pointer-events:none!important;filter:grayscale(1)} #dice.bot-turn::after{content:'BOT';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.65);color:#ffde59;font-size:10px;font-weight:900;border-radius:12px}
+#dice.rolling{animation:shake 0.08s infinite}
+@keyframes shake{0%{transform:rotate(-8deg) scale(1.08)}50%{transform:rotate(8deg) scale(1.08)}100%{transform:rotate(-8deg) scale(1.08)}}
+.pip{width:8px;height:8px;background:#222;border-radius:50%;opacity:0;margin:auto}.pip.on{opacity:1}
+
+/* ==========================================================
+   WIN POPUP & GENERIC POPUP
+   Final ranking leaderboard modal
+   ========================================================== */
+#popup{position:fixed;inset:0;background:rgba(0,0,0,0.88);display:none;justify-content:center;align-items:center;z-index:99;padding:16px} #popup.show{display:flex}
+.card{background:#1e2150;padding:22px;border-radius:20px;text-align:center;width:100%;max-width:320px}
+.btn{padding:10px 20px;background:linear-gradient(#ffde59,#ffb700);border:none;border-radius:22px;font-weight:800;box-shadow:0 4px 0 #b47f00;cursor:pointer;font-size:12px}
+
+/* ==========================================================
+   ANIMATION LINE - SNAKE/LADDER CONNECTOR
+   SVG dashed line with flowing animation
+   ========================================================== */
+#animLine{position:absolute;inset:6px;pointer-events:none;z-index:15;width:calc(100% - 12px);height:calc(100% - 12px)}
+@keyframes dashFlow{to{stroke-dashoffset:-28}}
+
+/* ==========================================================
+   IN-GAME MENU BUTTON & POPUP
+   ========================================================== */
+#menuBtn{display:none;background:#3a2a6a;border:1px solid #ffde59;color:#ffde59;padding:8px 14px;border-radius:12px;font-weight:800;font-size:11px;cursor:pointer}
+#menuBtn.show{display:block}
+#menuPopup{position:fixed;inset:0;background:rgba(0,0,0,0.88);display:none;justify-content:center;align-items:center;z-index:100;padding:16px}
+#menuPopup.show{display:flex}
+.menu-card{background:#1e2150;padding:20px;border-radius:20px;text-align:center;width:100%;max-width:340px;border:2px solid #2c317a}
+.menu-card h2{color:#ffde59;margin-bottom:12px;font-size:16px}
+.menu-list{display:flex;flex-direction:column;gap:8px;margin:14px 0}
+.menu-list button{padding:12px;border:none;border-radius:12px;font-weight:700;font-size:12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.m-primary{background:linear-gradient(#ffde59,#ffb700);color:#000;box-shadow:0 3px 0 #b47f00;}
+.m-secondary{background:#2c317a;color:white}
+.m-danger{background:#5a2a3a;color:#ff8daa;border:1px solid #ff408144}
+
+/* ==========================================================
+   RARE EVENT POPUP - LEGENDARY & CURSED
+   Special animation for rare ladder/snake spawns
+   ========================================================== */
+#rarePopup{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:none;justify-content:center;align-items:center;z-index:200;padding:20px}
+#rarePopup.show{display:flex;animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes popIn{0%{opacity:0;transform:scale(0.7)}100%{opacity:1;transform:scale(1)}}
+.rare-card{width:100%;max-width:340px;border-radius:22px;padding:2px;text-align:center;position:relative;overflow:hidden}
+.rare-card.ladder-bg{background:linear-gradient(145deg,#FFD700,#FF8C00,#FFD700);box-shadow:0 0 30px #FFD700,0 0 60px #FF8C00}
+.rare-card.snake-bg{background:linear-gradient(145deg,#FF1744,#8B0000,#FF1744);box-shadow:0 0 30px #FF1744,0 0 60px #8B0000}
+.rare-inner{background:#1a1d4a;border-radius:20px;padding:20px 16px}
+.rare-icon{font-size:52px;animation:rareBounce 0.8s infinite alternate}
+@keyframes rareBounce{from{transform:translateY(0) scale(1)}to{transform:translateY(-8px) scale(1.1)}}
+.rare-title{font-size:18px;font-weight:900;margin:8px 0;letter-spacing:1px}
+.rare-title.gold{color:#ffde59;text-shadow:0 0 10px #ffde59}.rare-title.red{color:#ff4d6d;text-shadow:0 0 10px #ff1744}
+.rare-desc{color:#c2c6f0;font-size:11px;line-height:1.4;margin:8px 0 14px}
+.rare-board{font-size:12px;font-weight:800;background:rgba(0,0,0,0.3);padding:8px;border-radius:12px;display:inline-block;margin:4px 0}
+
+/* ==========================================================
+   MAIN MENU SCREEN
+   Fullscreen overlay for game setup
+   ========================================================== */
+#mainMenu {
+  position: fixed;
+  inset: 0;
+  background: #0f1130 !important;
+  display: block;
+  z-index: 300;
+  padding: 12px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  color: #ffde59 !important;
+}
+
+#mainMenu *{
+  color-scheme: dark;
+}
+.mm-card h1, .mm-card h2, .mm-title, #mainMenu h1{
+  color:white!important;
+  -webkit-text-fill-color:#ffde59 !important;
+}
+
+#mainMenu.mm-card{
+  margin: 0 auto;
+  width:100%;
+  max-width:470px;
+  flex-shrink:0;
+}
+
+body.light #mainMenu{background:#c8d0f0}
+#mainMenu.hide{display:none}
+.mm-card{width:100%;max-width:470px;background:#1c2050;border-radius:22px;padding:14px;border:2px solid #2c317a;transition:all 0.3s}
+body.light.mm-card{background:#e8eaf8;border-color:#a8b0d8}
+.mm-mainTitle{text-align:center;color:#fff;font-size:13px;letter-spacing:3px;margin-bottom:2px;opacity:0.7} body.light.mm-mainTitle{color:#1c2050}
+.mm-title{text-align:center;color:#ffde59;font-size:22px;margin-bottom:12px}
+.mm-vertical{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.mm-vertical select{width:100%;padding:12px 10px;border-radius:12px;border:none;background:#2c317a;color:white;font-weight:700;font-size:12px}
+body.light.mm-vertical select{background:#d0d6f0;color:#1c2050;border:1px solid #a8b0d8}
+
+/* ==========================================================
+   MENU CHECKBOX TOGGLE - RULE SETTINGS
+   AKTIF/NONAKTIF toggle for game rules
+   ========================================================== */
+.mm-check{width:100%;padding:12px 10px;border-radius:12px;background:#2c317a;display:flex;justify-content:space-between;align-items:center;cursor:pointer;border:1px solid transparent;transition:all 0.2s}
+body.light.mm-check{background:#d0d6f0;border:1px solid #a8b0d8}
+.mm-check span{color:white!important;font-weight:700;font-size:12px} body.light.mm-check span{color:#1c2050!important}
+.mm-check input{width:18px;height:18px;accent-color:#ffde59}
+.mm-check.active{border-color:#69f0ae;background:#244a1e}
+.mm-tag{font-size:9px;padding:3px 7px;border-radius:8px;font-weight:800}
+.mm-tag.on{background:#69f0ae;color:#0a2a12}.mm-tag.off{background:#ff8daa;color:#4a1a2a}
+.mm-actions{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.mm-btn{padding:14px;border:none;border-radius:14px;font-weight:800;font-size:13px;cursor:pointer;}
+
+/* ==========================================================
+   SETTINGS / CREDIT / IN-GAME SETTINGS OVERLAYS
+   Fullscreen pages with show/hide logic
+   ========================================================== */
+#settingsPage,#creditPage,#inGameSettings{display:none;position:fixed;inset:0;background:#0f1130;z-index:301;padding:12px;justify-content:center;align-items:center}
+#settingsPage.show,#creditPage.show,#inGameSettings.show{display:flex}
+body.light #settingsPage,body.light #creditPage,body.light #inGameSettings{background:#c8d0f0}
+
+/* ==========================================================
+   FOOTER - VERSION & CREDIT INFO
+   ========================================================== */
+footer{margin-top:10px;text-align:center;color:#6b6faa;font-size:9px;line-height:1.4} body.light footer{color:#5a5e8a} footer b{color:#ffde59} body.light footer b{color:#ff8c00}
+
+/* ==========================================================
+   VOLUME SETTING ROW
+   Custom styled slider container with blur effect
+   ========================================================== */
+.settingRow{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:12px 14px;
+  margin:8px 0;
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:12px;
+  backdrop-filter: blur(6px);
+}
+.settingRow span{
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:0.5px;
+  color:#fff;
+  opacity:0.9;
+}
+
+/* ==========================================================
+   CUSTOM VOLUME SLIDER STYLING
+   Cyan themed slider with glowing thumb
+   ========================================================== */
+#volSlider{
+  -webkit-appearance:none;
+  appearance:none;
+  height:6px;
+  background:rgba(255,255,255,0.15);
+  border-radius:10px;
+  outline:none;
+  flex:1;
+}
+#volSlider::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  background:linear-gradient(180deg,#00e5ff,#00b8d4);
+  border:2px solid white;
+  box-shadow:0 0 10px #00e5ff, 0 2px 6px rgba(0,0,0,0.4);
+  cursor:pointer;
+  transition:0.15s;
+}
+#volSlider::-webkit-slider-thumb:active{
+  transform:scale(1.25);
+  box-shadow:0 0 18px #00e5ff;
+}
+#volSlider::-moz-range-thumb{
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  background:linear-gradient(180deg,#00e5ff,#00b8d4);
+  border:2px solid white;
+  box-shadow:0 0 10px #00e5ff;
+  cursor:pointer;
+}
+#volLabel{
+  font-size:13px;
+  font-weight:800;
+  color:#00e5ff;
+  background:rgba(0,229,255,0.12);
+  border:1px solid rgba(0,229,255,0.3);
+  padding:4px 8px;
+  border-radius:8px;
+  min-width:42px;
+  text-align:center;
+}
+
+/* Mute state: red color when volume 0% */
+#volSlider[value="0"] + #volLabel{
+  color:#ff4081;
+  background:rgba(255,64,129,0.12);
+  border-color:rgba(255,64,129,0.3);
+}
+
+/* ==========================================================
+   PLAYER CARD FIX - FORCE WHITE TEXT DARK MODE
+   Overrides light/dark inheritance issues for player names
+   ========================================================== */
+#players .p-card{
+  border-radius: 14px !important;
+  border: 2px solid transparent !important;
+}
+#players .p-card b{
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+#players .p-card span{
+  color: #a0a8cc !important;
+  -webkit-text-fill-color: #a0a8cc !important;
+}
+#players .p-card.turn{
+  border-color: #ffcc33 !important;
+}
+
+/* Light mode fix using body.light class, not prefers-color-scheme */
+body.light #players .p-card b{
+  color: #1a2150 !important;
+  -webkit-text-fill-color: #1a2150 !important;
+}
+body.light #players .p-card span{
+  color: #6b7ab0 !important;
+  -webkit-text-fill-color: #6b7ab0 !important;
+}
+body.light #players .p-card.turn b{
+  color: #0f1130 !important;
+  -webkit-text-fill-color: #0f1130 !important;
+}
+body.light #players .p-card.turn span{
+  color: #3a456b !important;
+  -webkit-text-fill-color: #3a456b !important;
+}
+
+/* ==========================================================
+   H1 TITLE COLOR FIX - DARK #ffde59 / LIGHT #1a2150
+   ========================================================== */
+h1{
+  color: #ffde59 !important;
+  -webkit-text-fill-color: #ffde59 !important;
+}
+h1 span{
+  color: #ffde59 !important;
+  -webkit-text-fill-color: #ffde59 !important;
+}
+
+/* Light mode override using body.light */
+body.light h1,
+body.light h1 span{
+  color: #1a2150 !important;
+  -webkit-text-fill-color: #1a2150 !important;
+}

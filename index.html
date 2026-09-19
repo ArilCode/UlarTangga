@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <!-- ==================== BASIC META ==================== -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Ular tangga</title>
+
+    <!-- ==================== PWA & FAVICON ASSETS ====================
+         Handles app icons for all platforms and PWA installability -->
+    <link rel="icon" type="image/png" href="./images/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="./images/favicon.svg" />
+    <link rel="shortcut icon" href="./images/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./images/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="MyWebSite" />
+    <link rel="manifest" href="./site.webmanifest" />
+
+    <!-- ==================== THEME & COLOR SCHEME ====================
+         Dark mode enforced, controls browser UI color -->
+    <meta name="color-scheme" content="dark only">
+    <meta name="theme-color" content="#0f1130">
+    <meta name="supported-color-schemes" content="dark">
+
+    <!-- ==================== GOOGLE FONTS ====================
+         Fredoka font for game typography - will be cached by Service Worker for offline use -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
+
+    <!-- ==================== MAIN STYLESHEET ==================== -->
+    <link rel="stylesheet" href="./style.css">
+
+    <!-- ==================== ANTI-CHEAT & ANTI-RELOAD SYSTEM ====================
+         Prevents accidental page reload via F5, Ctrl+R, swipe-down, and back button -->
+    <script>
+    let _allowInternalReload=false;
+    function allowAndReload(){_allowInternalReload=true;location.reload();}
+    (function(){
+      document.addEventListener('keydown',function(e){
+        if(_allowInternalReload) return;
+        const k=e.key.toLowerCase();
+        if(e.key==='F5'||(e.ctrlKey&&(k==='r'||k==='w'))||(e.metaKey&&(k==='r'||k==='w'))){e.preventDefault();e.stopImmediatePropagation();return false;}
+      },{capture:true});
+      let sy=0;
+      document.addEventListener('touchstart',e=>{sy=e.touches[0].clientY;},{passive:true});
+        document.addEventListener('touchmove', e => {
+        if (_allowInternalReload) return;
+        if (e.target.closest('#mainMenu')) return;
+        if (window.scrollY <= 0) { const dy = e.touches[0].clientY - sy; if (dy > 10) e.preventDefault(); }
+      }, { passive: false });
+      history.pushState(null,null,location.href);
+      window.addEventListener('popstate',()=>{if(_allowInternalReload) return;history.pushState(null,null,location.href);});
+      window.addEventListener('beforeunload',e=>{if(_allowInternalReload) return;e.preventDefault();e.returnValue='';return '';});
+    })();
+    </script>
+</head>
+<body>
+
+<!-- ==================== MAIN MENU SCREEN ====================
+     First screen user sees. Handles player count, game mode, rules setup -->
+<div id="mainMenu">
+<div class="mm-card">
+<div class="mm-mainTitle">MAIN MENU</div>
+<!-- Game title - color changes via CSS: #ffde59 dark / #1a2150 light -->
+<h1 class="mm-title">🐍 ULAR TANGGA 🪜</h1>
+
+<!-- Game configuration controls -->
+<div class="mm-vertical">
+<select id="mm_pCount"><option value="2">2 Pemain</option><option value="3">3 Pemain</option><option value="4" selected>4 Pemain</option></select>
+<select id="mm_mode"><option value="mix">Manusia vs BOT</option><option value="human">Manusia vs Manusia</option><option value="bot">BOT vs BOT</option></select>
+<div id="mm_diffWrap"><select id="mm_diff"><option value="easy">Mudah</option><option value="normal" selected>Normal</option><option value="hard">Sulit</option></select></div>
+
+<select id="mm_diceStart"><option value="need1">Wajib angka 1 baru jalan</option><option value="any" selected>Tidak wajib angka 1</option></select>
+
+<select id="mm_bounceRule"><option value="stay">Tidak mantul - Diam jika lebih 100</option><option value="bounce" selected>Mantul - Lebih 100 balik lagi</option></select>
+
+<!-- Rule toggles: extra turn on 6 and shared tile -->
+<label class="mm-check" id="chkSix"><span>Angka 6 putar lagi</span><span><b id="tagSix" class="mm-tag on">AKTIF</b> <input type="checkbox" id="mm_sixRepeat" checked></span></label>
+<label class="mm-check active" id="chkShare"><span>Sekotak bersama</span><span><b id="tagShare" class="mm-tag on">AKTIF</b> <input type="checkbox" id="mm_shared" checked></span></label>
+</div>
+
+<!-- Dynamic player name & pawn selection injected by JS -->
+<div id="mm_nameSetup"></div>
+
+<!-- Main menu action buttons -->
+<div class="mm-actions">
+<button class="mm-btn m-primary" id="btnStart" onclick="startFromMenu()">MULAI</button>
+<button class="mm-btn m-secondary" onclick="openSettings()">Pengaturan</button>
+<button class="mm-btn m-secondary" onclick="openCredit()">Kredit</button>
+</div>
+<footer><b>Ular Tangga Lucky v11.0.3</b><br>Dibuat oleh <b>Aril & Ai kesayangan</b><br/>© 2026</footer>
+</div>
+</div>
+
+<!-- ==================== SETTINGS PAGE (FROM MAIN MENU) ==================== -->
+<div id="settingsPage">
+<div class="mm-card" style="max-width:340px;width:100%">
+<h2 style="color:#ffde59;text-align:center;margin-bottom:12px">PENGATURAN</h2>
+<div class="menu-list">
+<button class="m-secondary" onclick="toggleTheme()"><span>Tema</span><b id="tagTheme" class="mm-tag off">GELAP</b></button>
+<!-- Music volume control -->
+<div class="settingRow">
+  <span>VOLUME MUSIK</span>
+  <div style="display:flex;align-items:center;gap:8px;width:60%">
+    <input type="range" id="volSlider" min="0" max="100" step="25" value="50" style="flex:1">
+    <b id="volLabel" style="width:40px;text-align:right">50%</b>
+  </div>
+</div>
+<button class="m-secondary" onclick="toggleMute()"><span>Bisukan</span><b id="tagMute" class="mm-tag on">ON</b></button>
+<button class="m-secondary" onclick="resetDefault()">Kembali ke Default</button>
+<button style="justify-content: center; text-align: center;" class="m-primary" onclick="closeSettings()"><span>Kembali</span></button>
+</div>
+</div>
+</div>
+
+<!-- ==================== IN-GAME SETTINGS PAGE ====================
+     Settings accessible during gameplay -->
+<div id="inGameSettings">
+<div class="mm-card" style="max-width:340px;width:100%">
+<h2 style="color:#ffde59;text-align:center;margin-bottom:12px">PENGATURAN GAME</h2>
+<div class="menu-list">
+<button class="m-secondary" onclick="toggleTheme()"><span>Tema</span><b id="tagTheme2" class="mm-tag off">GELAP</b></button>
+<button class="m-secondary" onclick="toggleMute()"><span>Bisukan</span><b id="tagMute2" class="mm-tag on">ON</b></button>
+<button class="m-secondary" onclick="resetDefault()">Kembali ke Default</button>
+<button style="" class="m-primary" onclick="closeInGameSettings()"><span>Kembali</span></button>
+</div>
+</div>
+</div>
+
+<!-- ==================== CREDIT PAGE ==================== -->
+<div id="creditPage">
+<div class="mm-card" style="max-width:340px;width:100%;text-align:center">
+<h2 style="color:#ffde59;margin-bottom:12px">KREDIT</h2>
+<p style="color:#c2c6f0;font-size:12px;line-height:1.6">
+<b>Ular Tangga Lucky v11.02</b><br>
+Dibuat oleh <b>Aril & Ai kesayangan</b><br><br>
+Website/PWA:<br>
+<a href="https://example.com" target="_blank" style="color:#ffde59">example.com</a><br><br>
+Version: v11.02<br>
+© 2026
+</p>
+<div class="menu-list"><button style="justify-content: center; text-align: center;" class="m-primary" onclick="closeCredit()"><span>Kembali</span></button></div>
+</div>
+</div>
+
+<!-- ==================== MAIN GAME WRAPPER ====================
+     Contains board, players, dice. Hidden until game starts -->
+<div id="wrap" style="display:none">
+<h1>🐍 <span>ULAR TANGGA</span> 🪜</h1>
+
+<!-- Legacy top bar - hidden, kept for compatibility -->
+<div class="top" id="top" style="display:none">
+<select id="pCount"><option value="2">2 Pemain</option><option value="3">3 Pemain</option><option value="4" selected>4 Pemain</option></select>
+<select id="mode"><option value="mix">Manusia vs BOT</option><option value="human">Manusia vs Manusia</option><option value="bot">BOT vs BOT</option></select>
+<div id="diffWrap"><select id="diff"><option value="easy">Mudah</option><option value="normal" selected>Normal</option><option value="hard">Sulit</option></select></div>
+<button class="btn" id="startBtn" onclick="startGame()">MULAI</button>
+</div>
+
+<!-- Player name setup area (in-game variant) -->
+<div id="nameSetup"></div>
+
+<!-- Game board container with animation line layer -->
+<div id="boardWrap"><div id="board"></div><svg id="animLine"></svg></div>
+
+<!-- Player status cards container -->
+<div id="players"></div>
+
+<!-- Dice and game log area -->
+<div id="diceArea"><div id="log">Masukkan nama & pilih pion, lalu MULAI</div><button id="menuBtn" onclick="openMenu()">MENU</button><div id="dice" onclick="humanRoll()"><div class="pip" id="p1"></div><div class="pip" id="p2"></div><div class="pip" id="p3"></div><div class="pip" id="p4"></div><div class="pip" id="p5"></div><div class="pip" id="p6"></div><div class="pip" id="p7"></div><div class="pip" id="p8"></div><div class="pip" id="p9"></div></div></div>
+<footer><b>Ular Tangga Lucky v11.02</b><br>Dibuat oleh <b>Aril & Ai kesayangan</b><br/>© 2026</footer>
+</div>
+
+<!-- ==================== WIN / LEADERBOARD POPUP ==================== -->
+<div id="popup"><div class="card"><div style="font-size:50px">🏆</div><h2 id="winTitle" style="color:#ffde59">LIST JUARA</h2><p id="winDesc" style="color:#aaa;font-size:11px;margin-top:8px"></p><div id="winList" style="text-align:left;margin:12px 0;background:rgba(0,0,0,0.3);padding:10px;border-radius:12px;font-size:11px"></div><button class="btn" onclick="allowAndReload()">MAIN LAGI</button></div></div>
+
+<!-- ==================== IN-GAME MENU POPUP ==================== -->
+<div id="menuPopup"><div class="menu-card"><h2>MENU</h2><p id="menuInfo" style="color:#aaa;font-size:10px"></p><div class="menu-list">
+<button class="m-primary" onclick="closeMenu()"><span>Lanjut</span></button>
+<button class="m-secondary" onclick="openInGameSettings()"><span>Pengaturan</span></button>
+<button class="m-secondary" onclick="restartSame()"><span>Ulang</span></button>
+<button class="m-danger" onclick="allowAndReload()"><span>Keluar</span></button>
+</div></div></div>
+
+<!-- ==================== RARE EVENT POPUP ====================
+     Shows special ladder/snake animation -->
+<div id="rarePopup" onclick="closeRarePopup()"><div class="rare-card" id="rareCard"><div class="rare-inner" id="rareInner"></div></div></div>
+
+<!-- ==================== MAIN GAME LOGIC ==================== -->
+<script src="./main.js" type="text/javascript" charset="utf-8"></script>
+
+<!-- ==================== PWA SERVICE WORKER REGISTRATION ====================
+     Enables offline support for all assets including images and fonts -->
+
+
+</body>
+</html>
