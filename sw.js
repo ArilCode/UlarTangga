@@ -1,5 +1,5 @@
-// Service Worker - Ular Tangga v11.0.7 - Offline with Fonts
-const CACHE = "ular-v11.0.7";
+// Service Worker - Ular Tangga v11.0.8 - Offline with Fonts
+const CACHE = "ular-v11.0.8";
 const ASSETS = [
   "./",
   "./index.html",
@@ -9,6 +9,8 @@ const ASSETS = [
   "./images/favicon-96x96.png",
   "./images/favicon.svg",
   "./images/favicon.ico",
+  "./images/web-app-manifest-192x192.png",
+  "./images/web-app-manifest-512x512.png",
   "./images/apple-touch-icon.png"
 ];
 

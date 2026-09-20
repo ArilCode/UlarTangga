@@ -5,7 +5,7 @@
 let SNAKES={97:78,95:24,92:84,62:37,48:12,35:6,16:4};
 let LADDERS={3:22,8:26,21:42,28:77,52:68,72:90,80:98};
 const COLORS=['#00e5ff','#ff4081','#ffde59','#69f0ae'];
-const EMOJIS=['🔵','🔴','🟡','🟢','😀','😎','🤖','👻','🐍','🪜'];
+const EMOJIS=['🔵','🔴','🟡','🟢','🐵','🦁','🐯','🐱','🐶','🐺','🐻'];
 const NAMES_DEF=['Biru','Merah','Kuning','Hijau'];
 
 // ==========================================================
@@ -206,10 +206,10 @@ function showRarePopup(){
   sfx('rare');
   if(r.type==='ladder'){
     card.className='rare-card ladder-bg';
-    inner.innerHTML=`<div class="rare-icon">🪜✨</div><div class="rare-title gold">LEGENDARY LADDER!</div><div class="rare-board" style="color:#ffde59;border:1px solid #ffde59">📍 ${r.from} → ${r.to}</div><br><br><button class="btn" onclick="closeRarePopup()">GASKEUN! 🚀</button>`;
+    inner.innerHTML=`<div class="rare-icon">🪜✨</div><div class="rare-title gold">TANGGA LEGEND!</div><div class="rare-board" style="color:#ffde59;border:1px solid #ffde59">📍 ${r.from} → ${r.to}</div><br><br><button class="btn" onclick="closeRarePopup()">GASKAN! 🚀</button>`;
   } else {
     card.className='rare-card snake-bg';
-    inner.innerHTML=`<div class="rare-icon">🐍💀</div><div class="rare-title red">CURSED SNAKE!</div><div class="rare-board" style="color:#ff8daa;border:1px solid #ff4081">📍 ${r.from} → ${r.to}</div><br><br><button class="btn" onclick="closeRarePopup()" style="background:linear-gradient(#ff4081,#ff1744);color:white">HATI-HATI! ⚠️</button>`;
+    inner.innerHTML=`<div class="rare-icon">🐍💀</div><div class="rare-title red">Ular Terkutuk!</div><div class="rare-board" style="color:#ff8daa;border:1px solid #ff4081">📍 ${r.from} → ${r.to}</div><br><br><button class="btn" onclick="closeRarePopup()" style="background:linear-gradient(#ff4081,#ff1744);color:white">HATI-HATI! ⚠️</button>`;
   }
   document.getElementById('rarePopup').classList.add('show');
   idx++;
@@ -438,9 +438,10 @@ function startGame(){
 // PLAYER TYPE HELPERS
 // ==========================================================
 function isAutoPlayer(p){ return p.type==='bot' || p.auto; }
-function toggleAuto(id){
- sfx('click');
- let p=players.find(x=>x.id===id);
+function toggleAuto(id) {
+  if (moving || isDiceLocked) return;
+  sfx('click');
+  let p = players.find(x => x.id === id);
  if(!p || p.win) return;
  if(p.origType==='bot') return;
  p.auto=!p.auto;
@@ -524,9 +525,8 @@ function place(){
 function getDiceForPlayer(p){ return Math.floor(Math.random()*6)+1; }
 function getDice(){ let d=getDiceForPlayer(players[turn]); if(d===6) sixStreak++; else sixStreak=0; if(sixStreak>=3){ d=Math.floor(Math.random()*5)+1; sixStreak=0; } return d; }
 function humanRoll() {
-  if (!playing || isDiceLocked || moving || rollInterval) return;
+  if (!playing || isDiceLocked || moving) return;
   if (isAutoPlayer(players[turn])) {
-    if (players[turn].auto) return;
     sfx('no');
     return;
   }
@@ -538,14 +538,17 @@ function humanRoll() {
 }
 
 function botRoll() {
-  if (!playing || moving || rollInterval || isDiceLocked) return;
+  if (!playing || moving || isDiceLocked) return;
   if (!isAutoPlayer(players[turn])) return;
   doRoll();
 }
 
 function doRoll() {
-  if (rollInterval) { return; }
-  if (isDiceLocked) return;
+  if (isDiceLocked || moving) return;
+  if (rollInterval) {
+    clearInterval(rollInterval);
+    rollInterval = null;
+  }
   
   isDiceLocked = true;
   moving = true;
@@ -560,10 +563,10 @@ function doRoll() {
       clearInterval(rollInterval);
       rollInterval = null;
       diceEl.classList.remove('rolling');
-           let d = getDice();
-           showDice(d);
-           diceEl.dataset.last = d;
-           moveStep(players[turn], d);
+      let d = getDice();
+      showDice(d);
+      diceEl.dataset.last = d;
+      moveStep(players[turn], d);
     }
   }, 70);
 }
@@ -743,22 +746,5 @@ let vs = document.getElementById('volSlider');
 if(vs){
   vs.addEventListener('input', (e)=>{
     setBgmVolumePercent(parseInt(e.target.value));
-  });
-}
-
-// === PWA - Offline Support v11.0.7 ===
-if ('serviceWorker' in navigator) {
-  // Register Service Worker after page fully loaded
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js');
-  });
-  
-  // Auto-reload when new Service Worker takes control
-  // Ensures user always gets the latest cached version
-  let refreshing = false;
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (refreshing) return;
-    refreshing = true;
-    window.location.reload();
   });
 }
