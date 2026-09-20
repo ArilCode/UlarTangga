@@ -401,7 +401,18 @@ function startFromMenu(){
 // ==========================================================
 function openMenu(){ sfx('click'); const modeMap={mix:'Manusia vs BOT', human:'Manusia vs Manusia', bot:'BOT vs BOT'}; const modeName = modeMap[gameMode] || gameMode; if(gameMode==='human'){ document.getElementById('menuInfo').textContent = `Mode: ${modeName} | Menang: ${winners.length}/${players.length}`; } else { const diffText = diffEl.options[diffEl.selectedIndex].text; document.getElementById('menuInfo').textContent = `Mode: ${modeName} (${diffText}) | Menang: ${winners.length}/${players.length}`; } document.getElementById('menuPopup').classList.add('show'); }
 function closeMenu(){ sfx('click'); document.getElementById('menuPopup').classList.remove('show'); }
-function restartSame(){ sfx('click'); closeMenu(); startGame(); }
+function restartSame(){
+  sfx('click');
+  if(rollInterval){ clearInterval(rollInterval); rollInterval=null; }
+  let maxId = setTimeout(()=>{},0);
+  for(let i=0;i<maxId;i++){ clearTimeout(i); clearInterval(i); }
+  isDiceLocked=false;
+  moving=false;
+  sixStreak=0;
+  document.getElementById('animLine').innerHTML='';
+  closeMenu();
+  startGame();
+}
 
 // ==========================================================
 // GAME INITIALIZATION
@@ -563,9 +574,10 @@ function doRoll() {
       clearInterval(rollInterval);
       rollInterval = null;
       diceEl.classList.remove('rolling');
-      let d = getDice();
+            let d = getDice();
       showDice(d);
       diceEl.dataset.last = d;
+      window._lastSteps = d; // simpan buat finishAfterMove
       moveStep(players[turn], d);
     }
   }, 70);
@@ -582,32 +594,28 @@ function drawLine(from,to,color){ let svg=document.getElementById('animLine'); s
 // Handles movement with bounce/stay rules for >100
 // ==========================================================
 function moveStep(p,steps){
- if(p.pos===0){ if(diceRuleStart==='need1' && steps!==1){ logEl.innerHTML=`${p.name} dapat ${steps} - butuh 1 untuk masuk!`; sfx('bust'); setTimeout(()=>{ moving=false; nextTurn(); },600); return; } }
+ if(p.pos===0){ if(diceRuleStart==='need1' && steps!==1){ logEl.innerHTML=`${p.name} dapat ${steps} - butuh 1 untuk masuk!`; sfx('bust'); isDiceLocked=false; moving=false; setTimeout(()=>{ nextTurn(); },600); return; } }
  let target = (p.pos===0)? steps : p.pos+steps;
   if(target>100){
       if (!diceRuleBounce) {
-     // STAY MODE - no bounce, but 6 still gives extra turn
+     // MODE DIAM
      let need = 100 - p.pos;
-     let isSixRoll = (steps === 6);
      logEl.innerHTML = `Butuh ${need}! ${p.pos}+${steps}=${target} lewat, diam!`;
      sfx('bust');
      setTimeout(() => {
        moving = false;
-        if (isSix && diceRuleSixRepeat) {
-          moving = false;
-          isDiceLocked = false;
+       isDiceLocked = false;
+       if (steps === 6 && diceRuleSixRepeat) {
           logEl.innerHTML = `🎉 Dapat 6! ${p.name} lempar lagi!`;
-          diceEl.classList.remove('disabled', 'bot-turn');
-          diceEl.style.pointerEvents = 'auto';
           updateLock();
           if (isAutoPlayer(p)) setTimeout(botRoll, 900);
-        } else {
-         nextTurn();
+       } else {
+          nextTurn();
        }
      }, 700);
      return;
    } else {
-     // BOUNCE MODE - classic bounce back logic
+     // MODE MANTUL
      let over=target-100; let bounce=100-over;
      logEl.innerHTML=`Lewat 100! ${p.pos}+${steps}=${target} → mantul ${bounce}`;
      sfx('bust');
@@ -654,8 +662,9 @@ function finishAfterMove(p){
    if(winners.length < players.length-1){
      logEl.innerHTML=`🏁 ${p.name} FINISH #${p.rank}! Sisa ${players.length-winners.length} pemain`;
      render(); place();
-     isDiceLocked = false; // FIX: buka kunci
-     setTimeout(()=>{ moving=false; nextTurn(); },800);
+     isDiceLocked = false;
+     moving=false;
+     setTimeout(()=>{ nextTurn(); },800);
      return;
    } else {
      let loser=players.find(x=>!x.win);
@@ -665,34 +674,25 @@ function finishAfterMove(p){
    }
  }
 
- let diceValue = document.querySelectorAll('.pip.on').length;
- // Mapping pip ke angka biar ga salah baca pas animasi
- let isSix = (diceValue === 6) || (p.pos!== 100 && sixStreak > 0 && diceValue === 6); // simpel: cek 6
- // Lebih akurat: ambil dari result terakhir
- let lastDice = 0;
- try { lastDice = parseInt(document.getElementById('dice').dataset.last || "0"); } catch {}
+ let gotSix = (steps === 6 || (diceEl.dataset.last && parseInt(diceEl.dataset.last)===6));
+ // pakai steps dari moveStep, jadi kita simpan global
+ if(window._lastSteps === 6) gotSix = true;
 
- // Pakai cara paling aman: cek sixStreak atau cek langsung
- const gotSix = sixStreak > 0; // karena sixStreak udah di-set di getDice()
+ // FIX UTAMA: pakai steps yang sebenarnya dari data-last
+ let lastRoll = parseInt(diceEl.dataset.last || "0");
+ gotSix = (lastRoll === 6);
 
  if(gotSix && diceRuleSixRepeat){
    moving=false;
-   isDiceLocked = false; // PENTING: buka kunci dulu
+   isDiceLocked = false;
    logEl.innerHTML=`🎉 Dapat 6! ${p.name} lempar lagi!`;
-
-   if(isAutoPlayer(p)){
-     diceEl.classList.add('disabled','bot-turn');
-     diceEl.style.pointerEvents='none';
-     setTimeout(botRoll, 900);
-   } else {
-     diceEl.classList.remove('disabled','bot-turn');
-     diceEl.style.pointerEvents='auto';
-     updateLock();
-   }
+   updateLock();
+   if(isAutoPlayer(p)) setTimeout(botRoll, 900);
  } else {
-   if(gotSix &&!diceRuleSixRepeat){ logEl.innerHTML=`Dapat 6 tapi mode tanpa putar lagi`; }
+   if(gotSix &&!diceRuleSixRepeat){ logEl.innerHTML=`Dapat 6 tapi tanpa putar lagi`; }
    sixStreak=0;
    isDiceLocked = false;
+   moving=false;
    nextTurn();
  }
 }
