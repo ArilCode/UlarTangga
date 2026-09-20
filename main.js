@@ -574,7 +574,7 @@ function doRoll() {
       clearInterval(rollInterval);
       rollInterval = null;
       diceEl.classList.remove('rolling');
-            let d = getDice();
+      let d = getDice();
       showDice(d);
       diceEl.dataset.last = d;
       window._lastSteps = d; // simpan buat finishAfterMove
@@ -594,28 +594,33 @@ function drawLine(from,to,color){ let svg=document.getElementById('animLine'); s
 // Handles movement with bounce/stay rules for >100
 // ==========================================================
 function moveStep(p,steps){
+ window._lastSteps = steps; // simpen dulu
  if(p.pos===0){ if(diceRuleStart==='need1' && steps!==1){ logEl.innerHTML=`${p.name} dapat ${steps} - butuh 1 untuk masuk!`; sfx('bust'); isDiceLocked=false; moving=false; setTimeout(()=>{ nextTurn(); },600); return; } }
  let target = (p.pos===0)? steps : p.pos+steps;
   if(target>100){
       if (!diceRuleBounce) {
-     // MODE DIAM
      let need = 100 - p.pos;
      logEl.innerHTML = `Butuh ${need}! ${p.pos}+${steps}=${target} lewat, diam!`;
      sfx('bust');
      setTimeout(() => {
        moving = false;
        isDiceLocked = false;
+       // LOGIKA BENAR DIAM + 6
        if (steps === 6 && diceRuleSixRepeat) {
-          logEl.innerHTML = `🎉 Dapat 6! ${p.name} lempar lagi!`;
-          updateLock();
-          if (isAutoPlayer(p)) setTimeout(botRoll, 900);
+          logEl.innerHTML = `🎉 Dapat 6! ${p.name} diam tapi lempar lagi! (butuh ${need})`;
+          diceEl.classList.remove('disabled','bot-turn','rolling');
+          diceEl.style.pointerEvents='auto';
+          // jangan panggil updateLock() disini karena nimpa log
+          if (isAutoPlayer(p)) {
+            diceEl.classList.add('disabled','bot-turn');
+            setTimeout(botRoll, 900);
+          }
        } else {
           nextTurn();
        }
      }, 700);
      return;
    } else {
-     // MODE MANTUL
      let over=target-100; let bounce=100-over;
      logEl.innerHTML=`Lewat 100! ${p.pos}+${steps}=${target} → mantul ${bounce}`;
      sfx('bust');
@@ -674,20 +679,19 @@ function finishAfterMove(p){
    }
  }
 
- let gotSix = (steps === 6 || (diceEl.dataset.last && parseInt(diceEl.dataset.last)===6));
- // pakai steps dari moveStep, jadi kita simpan global
- if(window._lastSteps === 6) gotSix = true;
-
- // FIX UTAMA: pakai steps yang sebenarnya dari data-last
- let lastRoll = parseInt(diceEl.dataset.last || "0");
- gotSix = (lastRoll === 6);
+ let lastRoll = window._lastSteps || parseInt(diceEl.dataset.last || "0");
+ let gotSix = (lastRoll === 6);
 
  if(gotSix && diceRuleSixRepeat){
    moving=false;
    isDiceLocked = false;
    logEl.innerHTML=`🎉 Dapat 6! ${p.name} lempar lagi!`;
-   updateLock();
-   if(isAutoPlayer(p)) setTimeout(botRoll, 900);
+   diceEl.classList.remove('disabled','bot-turn','rolling');
+   diceEl.style.pointerEvents='auto';
+   if(isAutoPlayer(p)){
+     diceEl.classList.add('disabled','bot-turn');
+     setTimeout(botRoll, 900);
+   }
  } else {
    if(gotSix &&!diceRuleSixRepeat){ logEl.innerHTML=`Dapat 6 tapi tanpa putar lagi`; }
    sixStreak=0;
@@ -748,3 +752,15 @@ if(vs){
     setBgmVolumePercent(parseInt(e.target.value));
   });
 }
+
+function closeInfoPopup(){document.getElementById('infoPopup').classList.remove('show')}
+window.addEventListener('load',()=>{
+  setTimeout(()=>{
+    if(localStorage.getItem('infoPop')===new Date().toDateString()) return;
+    sfx('rare'); document.getElementById('infoPopup').classList.add('show');
+    localStorage.setItem('infoPop', new Date().toDateString());
+  },900);
+});
+
+
+document.getElementById('year').textContent = new Date().getFullYear();
