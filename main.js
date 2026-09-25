@@ -764,3 +764,36 @@ window.addEventListener('load',()=>{
 
 
 document.getElementById('year').textContent = new Date().getFullYear();
+
+
+// === ANTI TIDUR - LAYAR GAK AKAN PADAM ===
+let wakeLock = null;
+
+async function enableNoSleep(){
+  try{
+    if('wakeLock' in navigator){
+      wakeLock = await navigator.wakeLock.request('screen');
+      console.log('Wake Lock aktif - layar gak akan padam');
+      wakeLock.addEventListener('release', ()=>{
+        console.log('Wake Lock lepas');
+      });
+    }
+  }catch(err){
+    console.log('Wake Lock gagal:', err.message);
+  }
+}
+
+// otomatis aktif pas game mulai / pertama kali tap
+document.addEventListener('pointerdown', ()=>{
+  if(!wakeLock) enableNoSleep();
+}, {once:true});
+
+// kalau user pindah tab terus balik lagi, nyalakan lagi
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible' && !wakeLock){
+    enableNoSleep();
+  }
+});
+
+// pas PWA di-install
+window.addEventListener('load', enableNoSleep);
