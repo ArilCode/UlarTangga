@@ -797,3 +797,10 @@ document.addEventListener('visibilitychange', ()=>{
 
 // pas PWA di-install
 window.addEventListener('load', enableNoSleep);
+
+// MINTA BROWSER JANGAN HAPUS CACHE SEMINGGU
+if (navigator.storage && navigator.storage.persist) {
+  navigator.storage.persist().then(ok => {
+    console.log(ok? "Cache DIKUNCI permanen ✅" : "Gagal dikunci ❌");
+  });
+}
