@@ -16,20 +16,29 @@ html, body {
 }
 
 /* ==========================================================
+   UKURAN PAPAN (satu sumber untuk semua layout)
+   --bs = lebar papan. Dihitung dari lebar DAN tinggi layar,
+   jadi papan + kontrol selalu muat di satu layar (tanpa scroll).
+   ========================================================== */
+:root{
+  --vh100:100vh;
+  --dz:112px;                       /* tinggi panel dadu sudut */
+  --bs:min(calc(100vw - 32px), calc(var(--vh100) - 236px), 520px);
+}
+@supports (height:100dvh){ :root{ --vh100:100dvh; } }
+
+/* ==========================================================
    BODY BASE THEME - DARK DEFAULT
    ========================================================== */
 body{background:#0f1130!important; color:white!important;}
 
-/* ==========================================================
-   GLOBAL RESET & FONT SETUP
-   Uses Fredoka font, disables selection and tap highlight
-   ========================================================== */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   font-family: 'Fredoka',sans-serif;
   user-select: none;
+  -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -41,85 +50,67 @@ body {
   min-height: 100vh;
   padding: 6px;
   flex-direction: column;
-  transition: all 0.3s;
+  transition: background 0.3s;
 }
 
-/* Light theme override for body */
 body.light {
   background: #c8d0f0;
 }
 
 /* ==========================================================
-   MAIN GAME WRAPPER
-   Central container for board and controls
+   SAAT MAIN: HALAMAN DIKUNCI, TIDAK BISA DI-SCROLL
+   (hanya Menu Utama yang boleh di-scroll)
    ========================================================== */
-#wrap {
+html.in-game, body.in-game{
+  overflow: hidden !important;
+  touch-action: none;
+}
+body.in-game{
+  position: fixed;
+  inset: 0;
   width: 100%;
-  max-width: 470px;
+  height: 100vh;
+  min-height: 0;
+  padding: max(6px, env(safe-area-inset-top)) max(6px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left));
+}
+@supports (height:100dvh){ body.in-game{ height:100dvh; } }
+
+/* Kartu popup yang boleh di-scroll sendiri bila layar sangat pendek */
+.scrollable{ touch-action: pan-y; overflow-y: auto; max-height: calc(var(--vh100) - 32px); }
+
+/* ==========================================================
+   MAIN GAME WRAPPER
+   ========================================================== */
+#wrap{ display:none; }
+body.in-game #wrap{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  width: calc(var(--bs) + 20px);
+  max-width: 100%;
   background: #1c2050;
   border-radius: 22px;
   padding: 10px;
-  transition: all 0.3s;
+  transition: background 0.3s;
 }
-
-body.light #wrap {
-  background:#e8eaf8;
-}
+body.light #wrap{ background:#e8eaf8; }
 
 /* ==========================================================
-   MAIN TITLE - ULAR TANGGA
-   Color switches: #ffde59 dark / #1a2150 light
+   MAIN TITLE
    ========================================================== */
 h1 {
   text-align: center;
   color: #ffde59;
   font-size: 18px;
+  line-height: 1.2;
 }
-
-body.light h1 {
-  color: #1c2050;
-}
-
-h1 span {
-  color: #ffde59
-}
+#gameTitle{ margin-bottom:6px; }
+h1 span { color: #ffde59 }
 
 /* ==========================================================
-   LEGACY TOP BAR (Hidden)
-   Kept for compatibility with old start system
+   PLAYER NAME INPUT BOX (menu utama)
    ========================================================== */
-.top {
-  display: flex;
-  gap: 6px;
-  margin: 8px 0;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.top select {
-  flex: 1;
-  padding: 10px 8px;
-  border-radius: 12px;
-  border: none;
-  background: #2c317a;
-  color: white;
-  font-weight: 700;
-  font-size: 11px;
-}
-
-/* ==========================================================
-   DIFFICULTY & PLAYER SETUP SECTION
-   ========================================================== */
-#diffWrap {
-  flex: 1 1 62%;
-  min-width: 150px;
-} #diffWrap select{width:100%;background:#3a2a6a;border:1px solid #ffde59;padding:10px 8px;border-radius:12px;color:white;font-weight:700;font-size:11px}
-#nameSetup{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}
-
-/* ==========================================================
-   PLAYER NAME INPUT BOX
-   Contains name, emoji select, and color picker
-   ========================================================== */
+#diffWrap { flex: 1 1 62%; min-width: 150px; }
 .nameBox{
   background:#24286a;
   border-radius:12px;
@@ -141,6 +132,8 @@ h1 span {
   font-size:11px;
   font-weight:700;
   outline:none;
+  -webkit-user-select: text;
+  user-select: text;
 }
 .nameBox select{
   width:52px;
@@ -157,19 +150,28 @@ h1 span {
 
 /* ==========================================================
    BOARD WRAPPER & BOARD GRID
-   10x10 zigzag board container
+   --cell = ukuran 1 kotak, dipakai pion & font supaya ikut skala papan
    ========================================================== */
-#boardWrap{position:relative;background:#0a0d2a;border-radius:16px;padding:6px;overflow:hidden}
+#boardWrap{
+  --cell: calc((var(--bs) - 12px - 36px) / 10);
+  position:relative;
+  width:100%;
+  background:#0a0d2a;
+  border-radius:16px;
+  padding:6px;
+  overflow:hidden;
+}
 body.light #boardWrap{background:#a8b0d8}
 #board{display:grid;grid-template-columns:repeat(10, minmax(0,1fr));gap:4px;width:100%}
 
 /* ==========================================================
    BOARD CELL STYLING
-   Handles normal, ladder, snake, and rare cells
    ========================================================== */
-.cell{position:relative;background:#2a2f7a;border-radius:8px;aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2px;transition:transform 0.2s;box-sizing:border-box;border:2px solid transparent}
-body.light.cell{background:#d0d6f0}.cell b{font-size:11px;color:#fff} body.light.cell b{color:#1c2050}
-.cell small{min-width:22px;text-align:center;font-size:6px;font-weight:800;padding:1px 4px;border-radius:8px;margin-top:2px}
+.cell{position:relative;background:#2a2f7a;border-radius:8px;aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:calc(var(--cell)*.06) 1px calc(var(--cell)*.08);transition:transform 0.2s;border:2px solid transparent;min-width:0}
+.cell b{font-size:max(8px,calc(var(--cell)*.3));line-height:1;color:#fff}
+body.light .cell{background:#d0d6f0}
+body.light .cell b{color:#1c2050}
+.cell small{min-width:0;text-align:center;font-size:max(5.5px,calc(var(--cell)*.2));line-height:1.1;font-weight:800;padding:1px calc(var(--cell)*.1);border-radius:8px;white-space:nowrap}
 .cell.ladder{background:linear-gradient(145deg,#2e5a28,#244a1e);border-color:#69f0ae44}.cell.ladder small{background:#69f0ae;color:#0a2a12}
 .cell.snake{background:linear-gradient(145deg,#5a2a3a,#4a1a2a);border-color:#ff408144}.cell.snake small{background:#ff4081;color:#fff}
 .cell.rare-ladder small{background:#69f0ae!important;color:#0a2a12!important}
@@ -184,57 +186,163 @@ body.light.cell{background:#d0d6f0}.cell b{font-size:11px;color:#fff} body.light
 @keyframes downAnim{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
 
 /* ==========================================================
-   PLAYER PAWN (PION)
-   Visual pawn on board with active and kicked animations
+   PLAYER PAWN (PION) - ukuran & posisi dalam persen kotak
    ========================================================== */
-.pion{position:absolute;width:22px;height:22px;border-radius:50%;border:2.2px solid white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:white;z-index:10;transition:all 0.35s cubic-bezier(0.34,1.56,0.64,1);left:50%;top:50%;pointer-events:none}
-.pion.active{transform:translate(-50%,-50%) scale(1.35) translateY(-6px);box-shadow:0 0 14px currentColor;border-color:#ffde59;z-index:12}
+.pion{
+  --k:.6;
+  position:absolute;
+  width:calc(var(--cell)*var(--k));
+  height:calc(var(--cell)*var(--k));
+  border-radius:50%;
+  border:2px solid white;
+  display:flex;align-items:center;justify-content:center;
+  font-size:calc(var(--cell)*var(--k)*.55);
+  line-height:1;
+  color:white;
+  z-index:10;
+  transform:translate(-50%,-50%);
+  box-shadow:0 1px 3px rgba(0,0,0,.55);
+  pointer-events:none;
+}
+.pion.active{border-color:#ffde59;box-shadow:0 0 10px #ffde59;z-index:12;transform:translate(-50%,-50%) scale(1.14)}
 .pion.kicked{animation:kick 0.6s ease forwards}
-@keyframes kick{0%{transform:translate(-50%,-50%) scale(1.3)}30%{transform:translate(-50%,-130%) scale(1.5) rotate(20deg)}100%{transform:translate(-50%,-50%) scale(0)}}
+@keyframes kick{0%{transform:translate(-50%,-50%) scale(1.3)}30%{transform:translate(-50%,-140%) scale(1.5) rotate(20deg)}100%{transform:translate(-50%,-50%) scale(0)}}
 
 /* ==========================================================
    PLAYER STATUS CARDS
-   Shows player info, position, and AUTO toggle
    ========================================================== */
-#players{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:10px 0;}
-.p-card{position:relative;background:rgba(0,0,0,0.25);padding:6px 2px 18px 2px;border-radius:10px;text-align:center;border:2px solid transparent}
-body.light.p-card{background:rgba(255,255,255,0.7)}.p-card.turn{border-color:#ffde59;background:rgba(255,222,89,0.15)}.p-card b{font-size:9px;color:white} body.light .p-card b {color:#1c2050}.p-card span{font-size:8px;color:#aaa}
+#players{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:8px 0;}
+.p-card{position:relative;background:rgba(0,0,0,0.25);padding:5px 2px 18px 2px;border-radius:14px;text-align:center;border:2px solid transparent;min-width:0}
+.p-dot{width:20px;height:20px;border-radius:50%;margin:0 auto 2px;border:1.5px solid white;display:flex;align-items:center;justify-content:center;font-size:10px}
+body.light .p-card{background:rgba(255,255,255,0.7)}
+.p-card.turn{border-color:#ffcc33;background:rgba(255,222,89,0.15)}
+.p-card b{font-size:9px;color:white;display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
+.p-card span{font-size:8px;color:#aaa}
 .p-card.finished{opacity:0.5;background:rgba(105,240,174,0.15);border-color:#69f0ae}
 .p-afk{position:absolute;bottom:1px;left:50%;transform:translateX(-50%);font-size:7px;padding:2px 5px;border-radius:8px;border:none;font-weight:800;cursor:pointer}
 .p-afk.on{background:#69f0ae;color:#0a2a12}.p-afk.off{background:#2c317a;color:#aaa;border:1px solid #3a3a6a}
-body.light.p-afk.off{background:#d0d6f0;color:#1c2050}
+body.light .p-afk.off{background:#d0d6f0;color:#1c2050}
+#players .p-card b{ color:#fff; -webkit-text-fill-color:#fff; }
+#players .p-card span{ color:#a0a8cc; -webkit-text-fill-color:#a0a8cc; }
+body.light #players .p-card b{ color:#1a2150; -webkit-text-fill-color:#1a2150; }
+body.light #players .p-card span{ color:#6b7ab0; -webkit-text-fill-color:#6b7ab0; }
+body.light #players .p-card.turn b{ color:#0f1130; -webkit-text-fill-color:#0f1130; }
+body.light #players .p-card.turn span{ color:#3a456b; -webkit-text-fill-color:#3a456b; }
 
 /* ==========================================================
    DICE AREA & GAME LOG
-   Contains log text, menu button, and dice
    ========================================================== */
 #diceArea{display:none;align-items:center;gap:10px;background:#24286a;border-radius:14px;padding:10px} body.light #diceArea{background:#d0d6f0} #diceArea.show{display:flex}
-#log{flex:1;color:#c2c6f0;font-size:10.5px;line-height:1.3} body.light #log{color:#1c2050}
-#dice{width:58px;height:58px;flex-shrink:0;background:white;border-radius:12px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:6px;gap:2px;box-shadow:0 4px 0 #999;cursor:pointer;position:relative}
-#dice.disabled{opacity:0.35;pointer-events:none!important;filter:grayscale(1);transform:translateY(3px)}
+#log,#logTop{flex:1;color:#c2c6f0;font-size:10.5px;line-height:1.3;min-width:0} body.light #log, body.light #logTop{color:#1c2050}
+
+.dice{--ds:58px;width:var(--ds);height:var(--ds);flex-shrink:0;background:white;border-radius:12px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:calc(var(--ds)*.1);gap:2px;box-shadow:0 4px 0 #999;cursor:pointer;position:relative}
+.dice.disabled{opacity:0.35;pointer-events:none!important;filter:grayscale(1);transform:translateY(3px)}
 #dice.bot-turn{opacity:0.35;pointer-events:none!important;filter:grayscale(1)} #dice.bot-turn::after{content:'BOT';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.65);color:#ffde59;font-size:10px;font-weight:900;border-radius:12px}
-#dice.rolling{animation:shake 0.08s infinite}
+.dice.rolling{opacity:1!important;filter:none!important;animation:shake 0.08s infinite}
 @keyframes shake{0%{transform:rotate(-8deg) scale(1.08)}50%{transform:rotate(8deg) scale(1.08)}100%{transform:rotate(-8deg) scale(1.08)}}
-.pip{width:8px;height:8px;background:#222;border-radius:50%;opacity:0;margin:auto}.pip.on{opacity:1}
+.pip{width:calc(var(--ds)*.14);height:calc(var(--ds)*.14);background:#222;border-radius:50%;opacity:0;margin:auto}.pip.on{opacity:1}
 
 /* ==========================================================
-   WIN POPUP & GENERIC POPUP
-   Final ranking leaderboard modal
+   MODE MANUSIA vs MANUSIA
+   - tiap pemain punya dadu sendiri di SUDUT layar
+   - papan di tengah, tanpa kartu pemain / judul
    ========================================================== */
-#popup{position:fixed;inset:0;background:rgba(0,0,0,0.88);display:none;justify-content:center;align-items:center;z-index:99;padding:16px} #popup.show{display:flex}
-.card{background:#1e2150;padding:22px;border-radius:20px;text-align:center;width:100%;max-width:320px}
-.btn{padding:10px 20px;background:linear-gradient(#ffde59,#ffb700);border:none;border-radius:22px;font-weight:800;box-shadow:0 4px 0 #b47f00;cursor:pointer;font-size:12px}
+body.mode-human{
+  --bs:min(calc(100vw - 12px), calc(var(--vh100) - 2*var(--dz) - 100px), 560px);
+}
+body.in-game.mode-human #wrap{
+  background:none;
+  padding:0;
+  width:var(--bs);
+  gap:6px;
+}
+body.mode-human #gameTitle,
+body.mode-human #players,
+body.mode-human #dice{ display:none; }
+#logTop{ display:none; }
+body.mode-human #logTop{
+  display:flex; align-items:center; justify-content:center; text-align:center;
+  transform:rotate(180deg); padding:0 8px;
+}
+body.mode-human #log{ text-align:center; max-height:2.7em; overflow:hidden; }
+body.mode-human #logTop{ height:30px; overflow:hidden; }
+body.mode-human #diceArea{ padding:0 10px; height:46px; overflow:hidden; }
+
+#cornerDice{ display:none; }
+body.mode-human #cornerDice{ display:block; }
+
+.cd{
+  --ds:64px;
+  position:fixed; z-index:20;
+  width:104px; height:var(--dz);
+  display:flex; flex-direction:column; align-items:center; justify-content:space-between;
+  padding:6px 4px 8px;
+  border-radius:18px;
+  background:rgba(36,40,106,.92);
+  border:2px solid rgba(255,255,255,.12);
+  color:#fff;
+  transition:opacity .25s, border-color .25s, box-shadow .25s;
+  opacity:.55;
+}
+body.light .cd{ background:rgba(208,214,240,.96); color:#1c2050; border-color:rgba(28,32,80,.18); }
+.cd.on-turn{ opacity:1; border-color:var(--pc); box-shadow:0 0 18px var(--pc); }
+.cd.finished{ opacity:.45; border-color:#69f0ae; }
+.cd.nope{ animation:nope .35s; }
+@keyframes nope{ 0%,100%{box-shadow:none} 50%{box-shadow:0 0 0 4px #ff4081} }
+.cd-name{ display:flex; align-items:center; gap:4px; max-width:100%; }
+.cd-name b{ font-size:11px; color:inherit; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cd-ic{ width:18px; height:18px; border-radius:50%; border:1.5px solid #fff; display:flex; align-items:center; justify-content:center; font-size:10px; flex-shrink:0; }
+.cd-sub{ font-size:9.5px; font-weight:700; color:#a0a8cc; white-space:nowrap; }
+body.light .cd-sub{ color:#4a5590; }
+.cd.on-turn .cd-sub{ color:#ffde59; }
+body.light .cd.on-turn .cd-sub{ color:#b45f00; }
+.cd-dice.disabled{ pointer-events:auto!important; }
+.cd.on-turn .cd-dice:not(.disabled){ animation:pulse .7s infinite alternate; }
+@keyframes pulse{ from{ transform:scale(1); box-shadow:0 4px 0 #999, 0 0 0 0 var(--pc);} to{ transform:scale(1.07); box-shadow:0 4px 0 #999, 0 0 14px 2px var(--pc);} }
+
+.cd.seat-bl{ left:max(8px,env(safe-area-inset-left));  bottom:max(8px,env(safe-area-inset-bottom)); }
+.cd.seat-br{ right:max(8px,env(safe-area-inset-right)); bottom:max(8px,env(safe-area-inset-bottom)); }
+.cd.seat-tl{ left:max(8px,env(safe-area-inset-left));  top:max(8px,env(safe-area-inset-top)); }
+.cd.seat-tr{ right:max(8px,env(safe-area-inset-right)); top:max(8px,env(safe-area-inset-top)); }
+/* sisi atas menghadap pemain yang duduk di seberang */
+.cd.flip{ transform:rotate(180deg); }
+
+/* Layar landscape: dadu sudut ada di kiri/kanan papan */
+@media (orientation:landscape){
+  body.mode-human{ --bs:min(calc(var(--vh100) - 76px), calc(100vw - 2*104px - 36px), 560px); }
+  body.mode-human #logTop{ display:none; }
+}
+
+/* HP landscape (layar pendek), mode selain manusia vs manusia: papan di kiri, kontrol di kanan */
+@media (orientation:landscape) and (max-height:520px){
+  body:not(.mode-human){ --bs:min(calc(var(--vh100) - 36px), calc(100vw - 250px)); }
+  body.in-game:not(.mode-human) #wrap{
+    display:grid;
+    grid-template-columns:auto minmax(190px,1fr);
+    grid-template-rows:auto auto 1fr;
+    column-gap:10px;
+    width:100%;
+    align-content:center;
+    align-items:start;
+  }
+  body:not(.mode-human) #boardWrap{ grid-row:1 / 4; grid-column:1; width:var(--bs); }
+  body:not(.mode-human) #gameTitle{ grid-column:2; grid-row:1; margin:0 0 4px; }
+  body:not(.mode-human) #players{ grid-column:2; grid-row:2; grid-template-columns:repeat(2,1fr); margin:0 0 8px; }
+  body:not(.mode-human) #diceArea{ grid-column:2; grid-row:3; }
+}
 
 /* ==========================================================
    ANIMATION LINE - SNAKE/LADDER CONNECTOR
-   SVG dashed line with flowing animation
    ========================================================== */
 #animLine{position:absolute;inset:6px;pointer-events:none;z-index:15;width:calc(100% - 12px);height:calc(100% - 12px)}
 @keyframes dashFlow{to{stroke-dashoffset:-28}}
 
 /* ==========================================================
-   IN-GAME MENU BUTTON & POPUP
+   POPUPS: WIN, IN-GAME MENU
    ========================================================== */
+.btn{padding:10px 20px;background:linear-gradient(#ffde59,#ffb700);border:none;border-radius:22px;font-weight:800;box-shadow:0 4px 0 #b47f00;cursor:pointer;font-size:12px}
+#popup{position:fixed;inset:0;background:rgba(0,0,0,0.88);display:none;justify-content:center;align-items:center;z-index:99;padding:16px} #popup.show{display:flex}
+.card{background:#1e2150;padding:22px;border-radius:20px;text-align:center;width:100%;max-width:320px}
 #menuBtn{display:none;background:#3a2a6a;border:1px solid #ffde59;color:#ffde59;padding:8px 14px;border-radius:12px;font-weight:800;font-size:11px;cursor:pointer}
 #menuBtn.show{display:block}
 #menuPopup{position:fixed;inset:0;background:rgba(0,0,0,0.88);display:none;justify-content:center;align-items:center;z-index:100;padding:16px}
@@ -249,7 +357,6 @@ body.light.p-afk.off{background:#d0d6f0;color:#1c2050}
 
 /* ==========================================================
    RARE EVENT POPUP - LEGENDARY & CURSED
-   Special animation for rare ladder/snake spawns
    ========================================================== */
 #rarePopup{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:none;justify-content:center;align-items:center;z-index:200;padding:20px}
 #rarePopup.show{display:flex;animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1)}
@@ -266,8 +373,7 @@ body.light.p-afk.off{background:#d0d6f0;color:#1c2050}
 .rare-board{font-size:12px;font-weight:800;background:rgba(0,0,0,0.3);padding:8px;border-radius:12px;display:inline-block;margin:4px 0}
 
 /* ==========================================================
-   MAIN MENU SCREEN
-   Fullscreen overlay for game setup
+   MAIN MENU SCREEN - satu-satunya layar yang boleh di-scroll
    ========================================================== */
 #mainMenu {
   position: fixed;
@@ -277,42 +383,35 @@ body.light.p-afk.off{background:#d0d6f0;color:#1c2050}
   z-index: 300;
   padding: 12px;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
   color: #ffde59 !important;
 }
-
-#mainMenu *{
-  color-scheme: dark;
-}
+#mainMenu *{ color-scheme: dark; }
+#mainMenu .mm-card{ margin:0 auto; }
 .mm-card h1, .mm-card h2, .mm-title, #mainMenu h1{
   color:white!important;
   -webkit-text-fill-color:#ffde59 !important;
 }
-
-#mainMenu.mm-card{
-  margin: 0 auto;
-  width:100%;
-  max-width:470px;
-  flex-shrink:0;
-}
-
-body.light #mainMenu{background:#c8d0f0}
+body.light #mainMenu{background:#c8d0f0 !important}
 #mainMenu.hide{display:none}
 .mm-card{width:100%;max-width:470px;background:#1c2050;border-radius:22px;padding:14px;border:2px solid #2c317a;transition:all 0.3s}
-body.light.mm-card{background:#e8eaf8;border-color:#a8b0d8}
-.mm-mainTitle{text-align:center;color:#fff;font-size:13px;letter-spacing:3px;margin-bottom:2px;opacity:0.7} body.light.mm-mainTitle{color:#1c2050}
+body.light .mm-card{background:#e8eaf8;border-color:#a8b0d8}
+.mm-mainTitle{text-align:center;color:#fff;font-size:13px;letter-spacing:3px;margin-bottom:2px;opacity:0.7} body.light .mm-mainTitle{color:#1c2050}
 .mm-title{text-align:center;color:#ffde59;font-size:22px;margin-bottom:12px}
 .mm-vertical{display:flex;flex-direction:column;gap:8px;margin:10px 0}
 .mm-vertical select{width:100%;padding:12px 10px;border-radius:12px;border:none;background:#2c317a;color:white;font-weight:700;font-size:12px}
-body.light.mm-vertical select{background:#d0d6f0;color:#1c2050;border:1px solid #a8b0d8}
+body.light .mm-vertical select{background:#d0d6f0;color:#1c2050;border:1px solid #a8b0d8}
+#mainMenu .mm-hint{font-size:11px;line-height:1.4;color:#c2c6f0 !important;background:rgba(0,0,0,.22);padding:8px 10px;border-radius:10px;text-align:center;margin-top:8px}
+body.light #mainMenu .mm-hint{color:#1c2050 !important;background:rgba(255,255,255,.55)}
 
 /* ==========================================================
    MENU CHECKBOX TOGGLE - RULE SETTINGS
-   AKTIF/NONAKTIF toggle for game rules
    ========================================================== */
 .mm-check{width:100%;padding:12px 10px;border-radius:12px;background:#2c317a;display:flex;justify-content:space-between;align-items:center;cursor:pointer;border:1px solid transparent;transition:all 0.2s}
-body.light.mm-check{background:#d0d6f0;border:1px solid #a8b0d8}
-.mm-check span{color:white!important;font-weight:700;font-size:12px} body.light.mm-check span{color:#1c2050!important}
+body.light .mm-check{background:#d0d6f0;border:1px solid #a8b0d8}
+.mm-check span{color:white!important;font-weight:700;font-size:12px} body.light .mm-check span{color:#1c2050!important}
 .mm-check input{width:18px;height:18px;accent-color:#ffde59}
 .mm-check.active{border-color:#69f0ae;background:#244a1e}
 .mm-tag{font-size:9px;padding:3px 7px;border-radius:8px;font-weight:800}
@@ -322,7 +421,6 @@ body.light.mm-check{background:#d0d6f0;border:1px solid #a8b0d8}
 
 /* ==========================================================
    SETTINGS / CREDIT / IN-GAME SETTINGS OVERLAYS
-   Fullscreen pages with show/hide logic
    ========================================================== */
 #settingsPage,#creditPage,#inGameSettings{display:none;position:fixed;inset:0;background:#0f1130;z-index:301;padding:12px;justify-content:center;align-items:center}
 #settingsPage.show,#creditPage.show,#inGameSettings.show{display:flex}
@@ -335,7 +433,6 @@ footer{margin-top:10px;text-align:center;color:#6b6faa;font-size:9px;line-height
 
 /* ==========================================================
    VOLUME SETTING ROW
-   Custom styled slider container with blur effect
    ========================================================== */
 .settingRow{
   display:flex;
@@ -355,11 +452,6 @@ footer{margin-top:10px;text-align:center;color:#6b6faa;font-size:9px;line-height
   color:#fff;
   opacity:0.9;
 }
-
-/* ==========================================================
-   CUSTOM VOLUME SLIDER STYLING
-   Cyan themed slider with glowing thumb
-   ========================================================== */
 #volSlider{
   -webkit-appearance:none;
   appearance:none;
@@ -368,6 +460,7 @@ footer{margin-top:10px;text-align:center;color:#6b6faa;font-size:9px;line-height
   border-radius:10px;
   outline:none;
   flex:1;
+  touch-action:pan-x;
 }
 #volSlider::-webkit-slider-thumb{
   -webkit-appearance:none;
@@ -404,8 +497,6 @@ footer{margin-top:10px;text-align:center;color:#6b6faa;font-size:9px;line-height
   min-width:42px;
   text-align:center;
 }
-
-/* Mute state: red color when volume 0% */
 #volSlider[value="0"] + #volLabel{
   color:#ff4081;
   background:rgba(255,64,129,0.12);
@@ -413,56 +504,12 @@ footer{margin-top:10px;text-align:center;color:#6b6faa;font-size:9px;line-height
 }
 
 /* ==========================================================
-   PLAYER CARD FIX - FORCE WHITE TEXT DARK MODE
-   Overrides light/dark inheritance issues for player names
+   H1 TITLE COLOR - DARK #ffde59 / LIGHT #1a2150
    ========================================================== */
-#players .p-card{
-  border-radius: 14px !important;
-  border: 2px solid transparent !important;
-}
-#players .p-card b{
-  color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff !important;
-}
-#players .p-card span{
-  color: #a0a8cc !important;
-  -webkit-text-fill-color: #a0a8cc !important;
-}
-#players .p-card.turn{
-  border-color: #ffcc33 !important;
-}
-
-/* Light mode fix using body.light class, not prefers-color-scheme */
-body.light #players .p-card b{
-  color: #1a2150 !important;
-  -webkit-text-fill-color: #1a2150 !important;
-}
-body.light #players .p-card span{
-  color: #6b7ab0 !important;
-  -webkit-text-fill-color: #6b7ab0 !important;
-}
-body.light #players .p-card.turn b{
-  color: #0f1130 !important;
-  -webkit-text-fill-color: #0f1130 !important;
-}
-body.light #players .p-card.turn span{
-  color: #3a456b !important;
-  -webkit-text-fill-color: #3a456b !important;
-}
-
-/* ==========================================================
-   H1 TITLE COLOR FIX - DARK #ffde59 / LIGHT #1a2150
-   ========================================================== */
-h1{
+h1, h1 span{
   color: #ffde59 !important;
   -webkit-text-fill-color: #ffde59 !important;
 }
-h1 span{
-  color: #ffde59 !important;
-  -webkit-text-fill-color: #ffde59 !important;
-}
-
-/* Light mode override using body.light */
 body.light h1,
 body.light h1 span{
   color: #1a2150 !important;

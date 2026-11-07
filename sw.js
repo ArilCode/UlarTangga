@@ -1,5 +1,5 @@
-// Service Worker - Ular Tangga v11.0.21 - PERMANENT INSTALL
-const CACHE = "ular-v11.0.21";
+// Service Worker - Ular Tangga v11.1.0 - PERMANENT INSTALL
+const CACHE = "ular-v11.1.0";
 const ASSETS = [
   "./",
   "./index.html",

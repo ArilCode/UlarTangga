@@ -3,7 +3,7 @@
   <head>
     <!-- ==================== BASIC META ==================== -->
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Ular tangga</title>
 
     <!-- ==================== PWA & FAVICON ASSETS ====================
@@ -39,7 +39,7 @@
       document.addEventListener('touchstart',e=>{sy=e.touches[0].clientY;},{passive:true});
         document.addEventListener('touchmove', e => {
         if (_allowInternalReload) return;
-        if (e.target.closest('#mainMenu')) return;
+        if (e.target.closest('#mainMenu, .scrollable')) return;
         if (window.scrollY <= 0) { const dy = e.touches[0].clientY - sy; if (dy > 10) e.preventDefault(); }
       }, { passive: false });
       history.pushState(null,null,location.href);
@@ -63,6 +63,7 @@
 <select id="mm_pCount"><option value="2">2 Pemain</option><option value="3">3 Pemain</option><option value="4" selected>4 Pemain</option></select>
 <select id="mm_mode"><option value="mix">Manusia vs BOT</option><option value="human">Manusia vs Manusia</option><option value="bot">BOT vs BOT</option></select>
 <div id="mm_diffWrap"><select id="mm_diff"><option value="easy">Mudah</option><option value="normal" selected>Normal</option><option value="hard">Sulit</option></select></div>
+<div id="mm_hint" class="mm-hint"></div>
 
 <select id="mm_diceStart"><option value="need1">Wajib angka 1 baru jalan</option><option value="any" selected>Tidak wajib angka 1</option></select>
 
@@ -82,13 +83,13 @@
 <button class="mm-btn m-secondary" onclick="openSettings()">Pengaturan</button>
 <button class="mm-btn m-secondary" onclick="openCredit()">Kredit</button>
 </div>
-<footer><b>Ular Tangga v11.0.21</b><br>Dibuat oleh <b>Aril & Ai kesayangan</b><br/>© <span><script>document.write(new Date().getFullYear())</script></span></footer>
+<footer><b>Ular Tangga v11.1.0</b><br>Dibuat oleh <b>Aril & Ai kesayangan</b><br/>© <span><script>document.write(new Date().getFullYear())</script></span></footer>
 </div>
 </div>
 
 <!-- ==================== SETTINGS PAGE (FROM MAIN MENU) ==================== -->
 <div id="settingsPage">
-<div class="mm-card" style="max-width:340px;width:100%">
+<div class="mm-card scrollable" style="max-width:340px;width:100%">
 <h2 style="color:#ffde59;text-align:center;margin-bottom:12px">PENGATURAN</h2>
 <div class="menu-list">
 <button class="m-secondary" onclick="toggleTheme()"><span>Tema</span><b id="tagTheme" class="mm-tag off">GELAP</b></button>
@@ -110,7 +111,7 @@
 <!-- ==================== IN-GAME SETTINGS PAGE ====================
      Settings accessible during gameplay -->
 <div id="inGameSettings">
-<div class="mm-card" style="max-width:340px;width:100%">
+<div class="mm-card scrollable" style="max-width:340px;width:100%">
 <h2 style="color:#ffde59;text-align:center;margin-bottom:12px">PENGATURAN GAME</h2>
 <div class="menu-list">
 <button class="m-secondary" onclick="toggleTheme()"><span>Tema</span><b id="tagTheme2" class="mm-tag off">GELAP</b></button>
@@ -126,11 +127,11 @@
 <div class="mm-card" style="max-width:340px;width:100%;text-align:center">
 <h2 style="color:#ffde59;margin-bottom:12px">KREDIT</h2>
 <p style="color:#c2c6f0;font-size:12px;line-height:1.6">
-<b>Ular Tangga v11.0.21</b><br>
+<b>Ular Tangga v11.1.0</b><br>
 Dibuat oleh <b>Aril & Ai kesayangan</b><br><br>
 <a href="https://ular-tangga-theta.vercel.app/" target="_blank" style="color:#ffde59">Website</a><br /><a href="https://my-all-link.vercel.app/" target="_blank" style="color:#ffde59">Portofolio</a><br /><a href="https://github.com/ArilCode/UlarTangga/issues/new" target="_blank" style="color:#ffde59">Laporkan Bug</a></a><br /><br />
 
-Version: v11.0.21<br>
+Version: v11.1.0<br>
 © <span><script>document.write(new Date().getFullYear())</script></span>
 </p>
 <div class="menu-list"><button style="justify-content: center; text-align: center;" class="m-primary" onclick="closeCredit()"><span>Kembali</span></button></div>
@@ -138,37 +139,33 @@ Version: v11.0.21<br>
 </div>
 
 <!-- ==================== MAIN GAME WRAPPER ====================
-     Contains board, players, dice. Hidden until game starts -->
-<div id="wrap" style="display:none">
-<h1>🐍 <span>ULAR TANGGA</span> 🪜</h1>
+     Berisi papan, pemain, dadu. Tersembunyi sampai game dimulai.
+     Saat main, halaman dikunci (tidak bisa di-scroll). -->
+<div id="wrap">
+<h1 id="gameTitle">🐍 <span>ULAR TANGGA</span> 🪜</h1>
 
-<!-- Legacy top bar - hidden, kept for compatibility -->
-<div class="top" id="top" style="display:none">
-<select id="pCount"><option value="2">2 Pemain</option><option value="3">3 Pemain</option><option value="4" selected>4 Pemain</option></select>
-<select id="mode"><option value="mix">Manusia vs BOT</option><option value="human">Manusia vs Manusia</option><option value="bot">BOT vs BOT</option></select>
-<div id="diffWrap"><select id="diff"><option value="easy">Mudah</option><option value="normal" selected>Normal</option><option value="hard">Sulit</option></select></div>
-<button class="btn" id="startBtn" onclick="startGame()">MULAI</button>
-</div>
-
-<!-- Player name setup area (in-game variant) -->
-<div id="nameSetup"></div>
+<!-- Log untuk pemain sisi atas (diputar 180°, hanya tampil di mode Manusia vs Manusia) -->
+<div id="logTop"></div>
 
 <!-- Game board container with animation line layer -->
 <div id="boardWrap"><div id="board"></div><svg id="animLine"></svg></div>
 
-<!-- Player status cards container -->
+<!-- Player status cards container (disembunyikan di mode Manusia vs Manusia) -->
 <div id="players"></div>
 
-<!-- Dice and game log area -->
-<div id="diceArea"><div id="log">Masukkan nama & pilih pion, lalu MULAI</div><button id="menuBtn" onclick="openMenu()">MENU</button><div id="dice" onclick="humanRoll()"><div class="pip" id="p1"></div><div class="pip" id="p2"></div><div class="pip" id="p3"></div><div class="pip" id="p4"></div><div class="pip" id="p5"></div><div class="pip" id="p6"></div><div class="pip" id="p7"></div><div class="pip" id="p8"></div><div class="pip" id="p9"></div></div></div>
-<footer><b>Ular Tangga v11.0.21</b><br>Dibuat oleh <b>Aril & Ai kesayangan</b><br/>© <span id="year"></span></footer>
+<!-- Log + tombol menu + dadu utama (dadu utama disembunyikan di mode Manusia vs Manusia) -->
+<div id="diceArea"><div id="log">Pilih mode lalu tekan MULAI</div><button id="menuBtn" onclick="openMenu()">MENU</button><div id="dice" class="dice" onclick="humanRoll()"></div></div>
 </div>
 
+<!-- ==================== DADU DI SUDUT LAYAR ====================
+     Dibuat oleh JS khusus mode Manusia vs Manusia: 1 dadu per pemain di tiap sudut -->
+<div id="cornerDice"></div>
+
 <!-- ==================== WIN / LEADERBOARD POPUP ==================== -->
-<div id="popup"><div class="card"><div style="font-size:50px">🏆</div><h2 id="winTitle" style="color:#ffde59">LIST JUARA</h2><p id="winDesc" style="color:#aaa;font-size:11px;margin-top:8px"></p><div id="winList" style="text-align:left;margin:12px 0;background:rgba(0,0,0,0.3);padding:10px;border-radius:12px;font-size:11px"></div><button class="btn" onclick="allowAndReload()">MAIN LAGI</button></div></div>
+<div id="popup"><div class="card scrollable"><div style="font-size:50px">🏆</div><h2 id="winTitle" style="color:#ffde59">LIST JUARA</h2><p id="winDesc" style="color:#aaa;font-size:11px;margin-top:8px"></p><div id="winList" style="text-align:left;margin:12px 0;background:rgba(0,0,0,0.3);padding:10px;border-radius:12px;font-size:11px"></div><button class="btn" onclick="allowAndReload()">MAIN LAGI</button></div></div>
 
 <!-- ==================== IN-GAME MENU POPUP ==================== -->
-<div id="menuPopup"><div class="menu-card"><h2>MENU</h2><p id="menuInfo" style="color:#aaa;font-size:10px"></p><div class="menu-list">
+<div id="menuPopup"><div class="menu-card scrollable"><h2>MENU</h2><p id="menuInfo" style="color:#aaa;font-size:10px"></p><div class="menu-list">
 <button class="m-primary" onclick="closeMenu()"><span>Lanjut</span></button>
 <button class="m-secondary" onclick="openInGameSettings()"><span>Pengaturan</span></button>
 <button class="m-secondary" onclick="restartSame()"><span>Ulang</span></button>
@@ -193,11 +190,11 @@ Version: v11.0.21<br>
 <!-- ==================== PWA SERVICE WORKER REGISTRATION ====================
      Enables offline support for all assets including images and fonts -->
 <script>
-// PWA - v11.0.21 Offline Ready
+// PWA - v11.1.0 Offline Ready
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
-     .then(reg => console.log('PWA v11.0.21 ready:', reg.scope))
+     .then(reg => console.log('PWA v11.1.0 ready:', reg.scope))
      .catch(err => console.log('PWA fail:', err));
   });
 }
